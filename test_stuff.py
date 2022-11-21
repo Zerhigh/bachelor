@@ -19,7 +19,7 @@ def plotting_result_images(image_list):
     sizer_res1 = int(np.sqrt(len(image_list)))
     index = 0
     fig1, ax1 = plt.subplots(sizer_res1, sizer_res1)
-    plt.subplots_adjust(wspace=0.000001, hspace=0.001)
+    plt.subplots_adjust(wspace=0, hspace=0.1)
     for i in range(sizer_res1):
         for j in range(sizer_res1):
             ax1[i, j].imshow(image_list[index])
@@ -44,7 +44,28 @@ def tile_image(image, tile_size, pixel_size, overlap):
     for i in range(no_images-1):
         for j in range(no_images-1):
             ret_list.append(image[i*increment : (i+1)*increment, j*increment : (j+1)*increment, :])
+    return ret_list
 
+
+def tile_image_w_overlap(image, tile_size, pixel_size, overlap):
+    """
+    image: uploadable image, should be square, starting in the lower left corner it will be squared
+    tile_size: requiered size in m
+    pixel_size: given size of a pixel
+    overlap: overlap of two adjacent pictures in m
+    """
+    # square image if necessary
+    if image.shape[0] != image.shape[1]:
+        image = square_image(image)
+    increment = tile_size * pixel_size
+    no_images = int(np.floor(image.shape[0]/(increment-overlap)))
+    print(image.shape)
+    print(no_images)
+    ret_list = list()
+    for i in range(no_images):
+        for j in range(no_images):
+            print(f'{(i*(increment - overlap))}:{(i+1)*increment - i*overlap}, {j*(increment - overlap)}:{(j+1)*increment - j*overlap}')
+            ret_list.append(image[(i*(increment - overlap)) : (i+1)*increment - i*overlap, j*(increment - overlap) : (j+1)*increment - j*overlap, :])
     return ret_list
 
 start = time.time()
@@ -52,7 +73,7 @@ source = 'C:/Users/Samuel/Desktop/TU/BachelorArbeit/bing_exp_beijing_2.tif'
 img = cv2.imread(source)
 #cv2.imshow('image', img)
 #cv2.waitKey(0)
-res1 = tile_image(img, 100, 1, 0)
+res1 = tile_image_w_overlap(img, 100, 1, 40)
 
 stop = time.time()
 print(f'time of script running [s]: {round(stop-start, 5)}')
