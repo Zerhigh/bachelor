@@ -87,7 +87,10 @@ def tile_image_w_overlap(image, parameter_dict):
                 second_ind.insert(0, '0')
             si = ''.join(second_ind)
             # print(f'{(i*(increment - overlap))}:{(i+1)*increment - i*overlap}, {j*(increment - overlap)}:{(j+1)*increment - j*overlap}')
-            ret_dict[f'img_{fi}_{si}'] = image[(i*(increment - overlap)) : (i+1)*increment - i*overlap, j*(increment - overlap) : (j+1)*increment - j*overlap, :]
+            add_image = image[(i*(increment - overlap)) : (i+1)*increment - i*overlap, j*(increment - overlap) : (j+1)*increment - j*overlap, :]
+            # check and dont include monocolor areas
+            if len(np.unique(add_image)) > 5:
+                ret_dict[f'img_{fi}_{si}'] = add_image
     e = time.time()
     print(f'tiling {image.shape[0]}x{image.shape[0]} image with tile size {tile_size} [m] and overlap of {overlap} [m] took {e-s} [s]')
     return ret_dict
@@ -108,20 +111,22 @@ def save_images(path, folder_name, image_dict, params):
 
 
 start = time.time()
-base_source = 'C:/Users/Samuel/Desktop/TU/BachelorArbeit/'
-source = 'bing_exp_beijing_2'
-params = {'tile_size': 150,
+base_source = 'C:/Users/Samuel/Desktop/TU/BachelorArbeit/maxar/'
+
+source = '10300100D94F1700-visual'
+params = {'tile_size': 1500,
           'pixel_size': 1,
-          'overlap': 40}
+          'overlap': 0}
 
 folder_name = f'{source}_t{params["tile_size"]}_p{params["pixel_size"]}_o{params["overlap"]}'
-
 if folder_name not in f'{os.listdir(base_source+"/tiled_images")}':
     print('image files are not yet tiled and saved, this may take a while..')
+    start2 = time.time()
     img = cv2.imread(f'{base_source+source}.tif')
+    stop2 = time.time()
+    print(f'time of image reading [s]: {round(stop2 - start2, 5)}')
     res1 = tile_image_w_overlap(img, params)
     save_images(base_source, folder_name, res1, params)
-
 else:
     print(f'{source} is already tiled with these parameters')
 
