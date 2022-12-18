@@ -6,11 +6,11 @@ import os
 import cv2
 
 
-source = "./test_data/"
-data_nameMS = ['MS/'+file for file in os.listdir(source+'MS/')]
-data_namePAN = ['PAN/'+file for file in os.listdir(source+'PAN/')]
-data_namePSMS = ['PS-MS/'+file for file in os.listdir(source+'PS-MS/')]
-data_namePSRGB = ['PS-RGB/'+file for file in os.listdir(source+'PS-RGB/')]
+source = "../Paris_spaceAI/AOI_3_Paris/"
+data_nameMS = ['MS/'+file for file in os.listdir(source+'MS/') if 'tif' in file]
+data_namePAN = ['PAN/'+file for file in os.listdir(source+'PAN/') if 'tif' in file]
+data_namePSMS = ['PS-MS/'+file for file in os.listdir(source+'PS-MS/') if 'tif' in file]
+data_namePSRGB = ['PS-RGB/'+file for file in os.listdir(source+'PS-RGB/') if 'tif' in file]
 
 
 def show_MS(filename):
@@ -36,12 +36,16 @@ def show_PAN(filenamePAN):
     plt.show()
 
 def show_PSMS(filenamePAN):
-    fig3, ax3 = plt.subplots()
-    tiff = rasterio.open(f'{filenamePAN}')
-    pic = tiff.read(1)
-    ax3.imshow(pic)
-    ax3.set_axis_off()
-    ax3.set_title(f'{filenamePAN.split("/")[-1]}', fontsize=5)
+    counter = 1
+    fig3, ax3 = plt.subplots(4, 2)
+    for i in range(4):
+        for j in range(2):
+            tiff = rasterio.open(f'{filenamePAN}')
+            pic = tiff.read(counter)
+            ax3[i, j].imshow(pic)
+            ax3[i, j].set_axis_off()
+            ax3[i, j].set_title(f'{filenamePAN.split("/")[-1]} band {counter}', fontsize=5)
+            counter += 1
     plt.show()
 
 def show_PSRGB(filenamePAN):
@@ -61,8 +65,8 @@ def show_PSRGB(filenamePAN):
 
 #show_MS(f'{source}{data_nameMS[0]}')
 #show_PAN(f'{source}{data_namePAN[0]}')
-#show_PSMS(f'{source}{data_namePSMS[0]}')
-show_PSRGB(f'{source}{data_namePSRGB[0]}')
+show_PSMS(f'{source}{data_namePSMS[0]}')
+#show_PSRGB(f'{source}{data_namePSRGB[0]}')
 
 
 #rasterio.plot.show(tiff, title = "fe in the Medierranean Sea")
