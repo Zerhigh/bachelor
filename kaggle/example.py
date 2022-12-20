@@ -33,7 +33,6 @@ for i in range(3):
     
 """
 
-
 ### Determine all unique pixel values from all images ###
 """
 unique_values = set()
@@ -66,14 +65,15 @@ for arr in os.listdir(label_image_semantic):
     print(f"saved {arr}")
 
 """
-### Train Model ###
 
+### Train Model ###
+"""
 # change epoch numbers
 kaggle_commit = False
 epochs = 20
 if kaggle_commit:
     epochs = 5
-epochs = 10
+epochs = 15
 
 # Aerial Semantic Segmentation Drone Dataset tree, gras, other vegetation, dirt, gravel, rocks, water, paved area, pool, person, dog, car, bicycle, roof, wall, fence, fence-pole, window, door, obstacle
 
@@ -86,50 +86,59 @@ model.train(
     train_annotations = "./input/semantic_drone_dataset/training_set/gt/semantic/rehashed/",
     checkpoints_path = "vgg_unet", epochs=epochs)
 
-model_name = 'model_2class_1912_13e'
+model_name = 'model_2class_2012_25e'
 model.save(model_name)
-
+"""
 
 ### Load Model ###
 """
+model_name = "model_2class_1912_10e"
 n_classes = 2
-reconstructed_model = load_model("model_1812_example")
+reconstructed_model = load_model(model_name)
 reconstructed_model.predict_segmentation = MethodType(keras_segmentation.predict.predict, reconstructed_model)
 reconstructed_model.input_width = 608
 reconstructed_model.input_height= 416
-reconstructed_model.output_width = 704# 208
-reconstructed_model.output_height = 988# 304
+reconstructed_model.output_width = 304#704# 208
+reconstructed_model.output_height = 208#988# 304
 reconstructed_model.n_classes=n_classes
 """
 
 ### Predict result ###
-
+"""
 start = time.time()
 
-for arr in os.listdir(label_image_semantic)[:1]:
+for arr in os.listdir(label_image_semantic):
     input_image = f"./input/semantic_drone_dataset/training_set/images/{arr.split('.')[0]}.jpg"
-    out = model.predict_segmentation(
+    out = reconstructed_model.predict_segmentation(
         inp=input_image,
-        out_fname=f"{arr.split('.')[0]}.png"
+        out_fname=f"./output/{model_name}/{arr.split('.')[0]}.png"
     )
+"""
 
-fig, axs = plt.subplots(1, 3, figsize=(8, 8), constrained_layout=True)
+### Plot result ###
+"""
+model_name = "model_2class_1912_10e"
 
-img_orig = Image.open(input_image)
-axs[0].imshow(img_orig)
-axs[0].set_title('original image-001.jpg')
-axs[0].grid(False)
+for img in os.listdir(f"./output/{model_name}/")[:5]:
+    fig, axs = plt.subplots(1, 3, figsize=(8, 8), constrained_layout=True)
+    img_orig = Image.open(f"./input/semantic_drone_dataset/training_set/images/{img.split('.')[0]}.jpg")
+    axs[0].imshow(img_orig)
+    axs[0].set_title('original image')
+    axs[0].grid(False)
 
-axs[1].imshow(out)
-axs[1].set_title('prediction image-out.png')
-axs[1].grid(False)
+    img_new = Image.open(f"./output/{model_name}/{img}")
+    axs[1].imshow(img_new)
+    axs[1].set_title('prediction image-out.png')
+    axs[1].grid(False)
 
-validation_image = "./input/semantic_drone_dataset/training_set/gt/semantic/rehashed/001.png"
-axs[2].imshow( Image.open(validation_image))
-axs[2].set_title('true label image-001.png')
-axs[2].grid(False)
+    validation_image = f"./input/semantic_drone_dataset/training_set/gt/semantic/rehashed/{img.split('.')[0]}.png"
+    axs[2].imshow( Image.open(validation_image))
+    axs[2].set_title('true label image-001.png')
+    axs[2].grid(False)
 
-plt.show()
+    plt.show()
+
+"""
 
 ### Use Pretrained model ###
 """from .models.all_models import model_from_name
