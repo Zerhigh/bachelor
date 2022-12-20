@@ -5,8 +5,8 @@ import random
 import numpy as np
 import cv2
 
-from .augmentation import augment_seg, custom_augment_seg
-from .data_loader import \
+from kaggle.data_utils.augmentation import augment_seg, custom_augment_seg
+from kaggle.data_utils.data_loader import \
     get_pairs_from_paths, DATA_LOADER_SEED, class_colors, DataLoaderError
 
 random.seed(DATA_LOADER_SEED)
@@ -107,5 +107,4 @@ if __name__ == "__main__":
     parser.add_argument("--n_classes", type=int)
     args = parser.parse_args()
 
-    visualize_segmentation_dataset(
-        args.images, args.annotations, args.n_classes)
+    visualize_segmentation_dataset(args.images, args.annotations, args.n_classes)

@@ -3,10 +3,10 @@
 import sys
 import argparse
 
-from .train import train
-from .predict import predict, predict_multiple, predict_video, evaluate
-from .data_utils.data_loader import verify_segmentation_dataset
-from .data_utils.visualize_dataset import visualize_segmentation_dataset
+from kaggle.train import train
+from kaggle.predict import predict, predict_multiple, predict_video, evaluate
+from kaggle.data_utils.data_loader import verify_segmentation_dataset
+from kaggle.data_utils.visualize_dataset import visualize_segmentation_dataset
 
 
 def train_action(command_parser):

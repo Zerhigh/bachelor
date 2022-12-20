@@ -8,8 +8,8 @@ import os
 import json 
 import sys 
 
-from .data_utils.data_loader import image_segmentation_generator
-from .train import CheckpointsCallback 
+from kaggle.data_utils.data_loader import image_segmentation_generator
+from kaggle.train import CheckpointsCallback
 
 from keras.models import Model 
 

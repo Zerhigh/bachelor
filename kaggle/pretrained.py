@@ -1,6 +1,6 @@
 import keras
 import tensorflow as tf
-from .models.all_models import model_from_name
+from kaggle.models.all_models import model_from_name
 
 
 def model_from_checkpoint_path(model_config, latest_weights):

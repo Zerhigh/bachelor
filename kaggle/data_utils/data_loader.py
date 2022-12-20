@@ -19,8 +19,8 @@ except ImportError:
         return iter
 
 
-from ..models.config import IMAGE_ORDERING
-from .augmentation import augment_seg, custom_augment_seg
+from kaggle.models.config import IMAGE_ORDERING
+from kaggle.data_utils.augmentation import augment_seg, custom_augment_seg
 
 DATA_LOADER_SEED = 0
 
