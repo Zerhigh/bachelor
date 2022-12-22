@@ -20,6 +20,7 @@ import cv2
 import skimage
 import subprocess
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from math import sqrt, radians, cos, sin, asin
 # import logging
 
@@ -512,11 +513,12 @@ def create_buffer_geopandas(inGDF, buffer_distance_meters=2,
 def _get_road_buffer(geoJson, im_vis_file, output_raster,
                      buffer_meters=2, burnValue=1,
                      # max_mask_val=1,
-                     buffer_cap_style=6,
-                     useSpacenetLabels=False,
+                     buffer_cap_style=1,
+                     useSpacenetLabels=True,
                      plot_file='', figsize=(11, 3), fontsize=6,
                      dpi=800, show_plot=False,
                      valid_road_types=set([]), verbose=False):
+    print("BIGTEST")
     '''
     Wrapper around create_buffer_geopandas(), with plots
     Get buffer around roads defined by geojson and image files
@@ -533,8 +535,10 @@ def _get_road_buffer(geoJson, im_vis_file, output_raster,
 
     # filter out roads of the wrong type
     try:
+        print('x')
         inGDF_raw = gpd.read_file(geoJson)
     except:
+        print('y')
         mask_gray = np.zeros(cv2.imread(im_vis_file, 0).shape)
         cv2.imwrite(output_raster, mask_gray)
         return [], []
@@ -582,8 +586,10 @@ def _get_road_buffer(geoJson, im_vis_file, output_raster,
                                          dissolve_by='class',
                                          projectToUTM=True)
 
+    print("TESTTEST")
     # make sure gdf is not null
     if len(gdf_buffer) == 0:
+
         mask_gray = np.zeros(cv2.imread(im_vis_file, 0).shape)
         cv2.imwrite(output_raster, mask_gray)
     # create label image
@@ -631,7 +637,7 @@ def _get_road_buffer(geoJson, im_vis_file, output_raster,
         palette = plt.cm.gray
         palette.set_over('orange', 1.0)
         ax3.imshow(z, cmap=palette, alpha=0.4,
-                   norm=plt.colors.Normalize(vmin=0.5, vmax=0.9, clip=False))
+                   norm=mpl.colors.Normalize(vmin=0.5, vmax=0.9, clip=False))
         ax3.set_title('Raw Image + Buffered Roads', fontsize=fontsize)
         ax3.axis('off')
 

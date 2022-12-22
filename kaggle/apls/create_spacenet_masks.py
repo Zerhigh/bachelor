@@ -21,7 +21,7 @@ import kaggle.apls.apls_utils as apls_utils
 
 ###############################################################################
 def create_masks(path_data, buffer_meters=2, n_bands=3,
-                 burnValue=150, make_plots=True, overwrite_ims=False,
+                 burnValue=150, make_plots=True, overwrite_ims=True,
                  output_df_file='',
                  header = ['name', 'im_file', 'im_vis_file', 'mask_file', 'mask_vis_file']):
     '''
@@ -91,9 +91,12 @@ def create_masks(path_data, buffer_meters=2, n_bands=3,
         # determine output files
         # label_file = os.path.join(path_labels, 'spacenetroads_AOI_2_Vegas_' \
         #                             + name_root + '.geojson')
-        label_file = os.path.join(path_labels, 'spacenetroads_' + name_root
+
+        # SN3_roads_train_AOI_3_Paris_geojson_roads_img6
+        label_file = os.path.join(path_labels, "geojson_roads/", 'SN3_roads_train_AOI_3_Paris_geojson_roads_' + name_root.split('_')[-1]
                                   + '.geojson')
         label_file_tot = os.path.join(path_labels, label_file)
+        print("label files", label_file, label_file_tot)
         mask_file = os.path.join(path_masks,  name_root + '.png')
         if make_plots:
             plot_file = os.path.join(path_masks_plot,  name_root + '.png')
@@ -114,13 +117,14 @@ def create_masks(path_data, buffer_meters=2, n_bands=3,
                                                           mask_file,
                                                           buffer_meters=buffer_meters,
                                                           burnValue=burnValue,
-                                                          buffer_cap_style=6,
+                                                          buffer_cap_style=1,
                                                           plot_file=plot_file,
                                                           figsize=(6, 6),
                                                           fontsize=8,
                                                           dpi=500,
                                                           show_plot=False,
                                                           verbose=False)
+            print(gdf_buffer)
 
         # resize in ingest so we don't have to save the very large arrays
         outfile_list.append([im_name, im_file_out, im_file_out_vis,
@@ -128,9 +132,9 @@ def create_masks(path_data, buffer_meters=2, n_bands=3,
 
     # make dataframe and save
     df = pd.DataFrame(outfile_list, columns=header)
-    if len(output_df_file) > 0:
-        df.to_csv(output_df_file, index=False)
-    print("\ndf.ix[0]:", df.ix[0])
+    #if len(output_df_file) > 0:
+    #   df.to_csv() #output_df_file, index=False
+    #print("\ndf.ix[0]:", df.ix[0])
     print("\nTotal data length:", len(df))
     t4 = time.time()
     print("Time to run create_masks():", t4 - t0, "seconds")
@@ -158,6 +162,7 @@ def main():
 
     args = parser.parse_args()
     print(args.path_data)
+    print(args.overwrite_ims)
 
     #data_root = 'AOI' + args.path_data.split('AOI')[-1].replace('/', '_')
     data_root = '/test_data/PS-RGB/'
