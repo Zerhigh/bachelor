@@ -10,11 +10,18 @@ import tensorflow as tf
 
 from types import MethodType
 
-
+# old images
+"""
 original_image = "./input/semantic_drone_dataset/training_set/images/001.jpg"
 label_image_semantic_rehashed = "./input/semantic_drone_dataset/training_set/gt/semantic/rehashed/"
 label_image_semantic_name = "./input/semantic_drone_dataset/training_set/gt/semantic/label_images/"
 label_image_semantic = "./input/semantic_drone_dataset/training_set/gt/semantic/label_images/"
+"""
+# Paris images
+label_image_semantic_rehashed = 'C:/Users/shollend/bachelor/test_data/train/rehashed/'
+label_image_semantic_masks = 'C:/Users/shollend/bachelor/test_data/train/images/masks2m/'
+label_image_semantic = 'C:/Users/shollend/bachelor/test_data/train/images/'
+
 
 ### Plotting ###
 def plotting(path):
@@ -54,24 +61,27 @@ def unique_pixel_vals(path):
 # reassign_hash = {0: 0, 1: 128, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0}
 reassign_hash = {0: 0, 1: 128, 2: 2, 3: 130, 4: 102, 5: 70, 6: 9, 7: 107, 8: 112, 9: 48, 10: 51, 11: 119, 12: 254,
                  13: 153, 14: 28, 15: 190, 16: 255}
+reassign_hash_Paris = {255: 1}
 
-def rehash_images(rehash, path):
-    for arr in os.listdir(path):
-        blab = np.asarray(Image.open(path + arr))[:, :, 0]
+def rehash_images(rehash, inpath, outpath):
+    for arr in os.listdir(f'{inpath}'):
+        print(arr)
+        # old images blab = np.asarray(Image.open(f"{inpath}masks2m/{arr}"))[:, :, 0]
+        blab = np.asarray(Image.open(f"{inpath}{arr}"))[:, :]
         image = blab.copy()
-        image[image != 128] = 0
-        image[image == 128] = 1
+        #image[image != 128] = 0
+        image[image == 255] = 1
         #for k, v in rehash.items():
         #    image[image == v] = k
         im = Image.fromarray(image)
-        im.save(f"./input/semantic_drone_dataset/training_set/gt/semantic/rehashed/{arr}")
+        im.save(f"{outpath}{arr}")
         print(f"saved {arr}")
 
-#rehash_images(reassign_hash, label_image_semantic)
+# rehash_images(reassign_hash_Paris, label_image_semantic_masks, label_image_semantic_rehashed)
 
 ### Train Model ###
 
-def train_model(model_name_assign, epochs, n_classes, hw):
+def train_model(model_name_assign, epochs, n_classes, hw, train_images, train_annotations):
     # Aerial Semantic Segmentation Drone Dataset tree, gras, other vegetation, dirt, gravel, rocks, water, paved area, pool, person, dog, car, bicycle, roof, wall, fence, fence-pole, window, door, obstacle
 
     n_classes = n_classes# 2 #2 #22
@@ -79,14 +89,14 @@ def train_model(model_name_assign, epochs, n_classes, hw):
 
     # train model vgg_unet (?)
     model.train(
-        train_images = "./input/semantic_drone_dataset/training_set/images/",
-        train_annotations = "./input/semantic_drone_dataset/training_set/gt/semantic/rehashed/",
+        train_images = train_images,
+        train_annotations = train_annotations,
         checkpoints_path = "vgg_unet", epochs=epochs)
 
     model.save(model_name_assign)
 
-model_name = 'model_2class_2012_25e'
-#train_model(model_name, 15, 2, (416, 608))
+model_name = 'paris_model_2class_2412_12e'
+train_model(model_name, 12, 2, (512, 512), label_image_semantic, label_image_semantic_rehashed)
 
 ### Load Model ###
 def load_model_wparams(model_name_get, inp_hw, out_hw, n_classes):

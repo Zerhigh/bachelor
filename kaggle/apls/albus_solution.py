@@ -566,7 +566,6 @@ def calc_rescale(im_file_raw, m, percentiles):
     return m
 
 def main():
-    print('hi')
     parser = argparse.ArgumentParser()
     parser.add_argument('--datasets', default='C:/Users/shollend/bachelor/test_data/',  type=str, nargs='+')
     parser.add_argument('--training', default='C:/Users/shollend/bachelor/test_data/', action='store_true')
@@ -578,14 +577,12 @@ def main():
     test = not args.training #
     path_outputs = os.path.join(path_apls, 'train' if not test else 'test', 'masks{}m'.format(buffer_meters))
     path_images_8bit = os.path.join(path_apls, 'train' if not test else 'test', 'images')
-    print(test, path_outputs, path_images_8bit)
     for d in [path_outputs, path_images_8bit]:
         shutil.rmtree(d, ignore_errors=True)
         os.makedirs(d, exist_ok=True)
 
     print(args.datasets)
 
-    print('hi4')
     path_data = args.datasets
     path_data = path_data.rstrip('/')
     test_data_name = os.path.split(path_data)[-1]
@@ -593,57 +590,66 @@ def main():
     path_images_raw = os.path.join(path_data, 'PS-RGB')
     path_labels = os.path.join(path_data, 'geojson_roads')
 
+    print('path', path_labels)
     # iterate through images, convert to 8-bit, and create masks
     im_files = os.listdir(path_images_raw)
+    geojson_files = os.listdir(path_labels)
+    print('path', geojson_files)
     m = defaultdict(list)
     for im_file in im_files:
-        if not im_file.endswith('.tif'):
-            continue
-
         name_root = im_file.split('_')[-1].split('.')[0]
-
-        # create 8-bit image
-        im_file_raw = os.path.join(path_images_raw, im_file)
-        im_file_out = os.path.join(path_images_8bit, test_data_name + name_root + '.tif')
-        # convert to 8bit
-
-        # m = calc_rescale(im_file_raw, m, percentiles=[2,98])
-        # continue
-        rescale_type = '2'#test_data_name.split('_')[1]
-        print(rescale_type)
-        if not os.path.isfile(im_file_out):
-            convert_to_8Bit(im_file_raw, im_file_out,
-                                       outputPixType='Byte',
-                                       outputFormat='GTiff',
-                                       rescale_type= rescale[rescale_type],#'clip', #rescale[rescale_type],
-                                       percentiles=[2,98])
-
-        if test:
-            continue
-        # determine output files
-        label_file = os.path.join(path_labels, 'SN3_roads_train_AOI_3_Paris_geojson_roads_' + name_root + '.geojson')
-        print(label_file)
-        label_file_tot = os.path.join(path_labels, label_file)
-        output_raster = os.path.join(path_outputs, test_data_name + name_root + '.tif')
-
-        print("\nname_root:", name_root)
-        print("  output_raster:", output_raster)
-
-        # create masks
-        mask, gdf_buffer = get_road_buffer(label_file_tot, im_file_out,
-                                                      output_raster,
-                                                      buffer_meters=buffer_meters,
-                                                      burnValue=burnValue,
-                                                      bufferRoundness=6,
-                                                      plot_file=None,
-                                                      figsize= (6,6),  #(13,4),
-                                                      fontsize=8,
-                                                      dpi=200, show_plot=True,
-                                                      verbose=True)
+        # only if geojson is available
+        if 'SN3_roads_train_AOI_3_Paris_geojson_roads_' + name_root + '.geojson' in geojson_files:
+            if not im_file.endswith('.tif'):
+                continue
 
 
-    for k, v in m.items():
-        print(test_data_name, k, np.mean(v, axis=0))
+
+            # create 8-bit image
+            im_file_raw = os.path.join(path_images_raw, im_file)
+            im_file_out = os.path.join(path_images_8bit, test_data_name + name_root + '.tif')
+            # convert to 8bit
+
+            # m = calc_rescale(im_file_raw, m, percentiles=[2,98])
+            # continue
+
+            # after visual inspection i chose 3
+            rescale_type = '3' #test_data_name.split('_')[1]
+            print(rescale_type)
+            if not os.path.isfile(im_file_out):
+                convert_to_8Bit(im_file_raw, im_file_out,
+                                           outputPixType='Byte',
+                                           outputFormat='GTiff',
+                                           rescale_type= rescale[rescale_type],#'clip', #rescale[rescale_type],
+                                           percentiles=[2,98])
+
+            if test:
+                continue
+            # determine output files
+            label_file = os.path.join(path_labels, 'SN3_roads_train_AOI_3_Paris_geojson_roads_' + name_root + '.geojson')
+            print(label_file)
+            label_file_tot = os.path.join(path_labels, label_file)
+            output_raster = os.path.join(path_outputs, test_data_name + name_root + '.tif')
+
+            print("\nname_root:", name_root)
+            print("  output_raster:", output_raster)
+
+            # create masks
+            mask, gdf_buffer = get_road_buffer(label_file_tot, im_file_out,
+                                                          output_raster,
+                                                          buffer_meters=buffer_meters,
+                                                          burnValue=burnValue,
+                                                          bufferRoundness=6,
+                                                          plot_file=None,
+                                                          figsize= (6,6),  #(13,4),
+                                                          fontsize=8,
+                                                          dpi=200, show_plot=True,
+                                                          verbose=True)
+
+
+        for k, v in m.items():
+            print(test_data_name, k, np.mean(v, axis=0))
+    print(cc)
 
 ###############################################################################
 if __name__ == "__main__":
