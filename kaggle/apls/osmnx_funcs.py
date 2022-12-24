@@ -77,8 +77,10 @@ def project_gdf(gdf, to_crs=None, to_latlong=False):
         else:
             # else, project the gdf to UTM
             # if GeoDataFrame is already in UTM, just return it
-            if (gdf.crs is not None) and ('proj' in gdf.crs) and (gdf.crs['proj'] == 'utm'):
-                return gdf
+
+            # exluded by me bacause of not understandable error
+            #if (gdf.crs is not None) and ('proj' in gdf.crs) and (gdf.crs['proj'] == 'utm'):
+            #    return gdf
 
             # calculate the centroid of the union of all the geometries in the
             # GeoDataFrame

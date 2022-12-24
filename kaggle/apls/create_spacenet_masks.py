@@ -17,6 +17,7 @@ import pandas as pd
 path_apls_src = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(path_apls_src)
 import kaggle.apls.apls_utils as apls_utils
+# import kaggle.apls.albus_solution as apls_utils
 
 
 ###############################################################################
@@ -72,6 +73,7 @@ def create_masks(path_data, buffer_meters=2, n_bands=3,
         im_file_raw = os.path.join(path_images_raw, im_name)
         im_file_out = os.path.join(path_images_8bit, im_name)
         im_file_out_vis = im_file_out.replace('MUL', 'RGB')
+        print("aaaa", im_file_out_vis)
         # get visible file (if using 8band imagery we want the 3band file
         # for plotting purposes)
         # if n_bands == 3:
@@ -97,7 +99,7 @@ def create_masks(path_data, buffer_meters=2, n_bands=3,
                                   + '.geojson')
         label_file_tot = os.path.join(path_labels, label_file)
         print("label files", label_file, label_file_tot)
-        mask_file = os.path.join(path_masks,  name_root + '.png')
+        mask_file = os.path.join(path_masks,  name_root + '.tiff')
         if make_plots:
             plot_file = os.path.join(path_masks_plot,  name_root + '.png')
         else:
@@ -132,8 +134,9 @@ def create_masks(path_data, buffer_meters=2, n_bands=3,
 
     # make dataframe and save
     df = pd.DataFrame(outfile_list, columns=header)
-    #if len(output_df_file) > 0:
-    #   df.to_csv() #output_df_file, index=False
+    if len(output_df_file) > 0:
+        print('happening')
+        #df.to_csv(output_df_file, index=False) #
     #print("\ndf.ix[0]:", df.ix[0])
     print("\nTotal data length:", len(df))
     t4 = time.time()

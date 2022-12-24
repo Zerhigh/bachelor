@@ -511,13 +511,13 @@ def create_buffer_geopandas(inGDF, buffer_distance_meters=2,
 
 ###############################################################################
 def _get_road_buffer(geoJson, im_vis_file, output_raster,
-                     buffer_meters=2, burnValue=1,
+                     buffer_meters=2, burnValue=150,
                      # max_mask_val=1,
                      buffer_cap_style=1,
                      useSpacenetLabels=True,
                      plot_file='', figsize=(11, 3), fontsize=6,
                      dpi=800, show_plot=False,
-                     valid_road_types=set([]), verbose=False):
+                     valid_road_types=set([]), verbose=True):
     print("BIGTEST")
     '''
     Wrapper around create_buffer_geopandas(), with plots
@@ -589,15 +589,19 @@ def _get_road_buffer(geoJson, im_vis_file, output_raster,
     print("TESTTEST")
     # make sure gdf is not null
     if len(gdf_buffer) == 0:
-
+        print("bad")
         mask_gray = np.zeros(cv2.imread(im_vis_file, 0).shape)
         cv2.imwrite(output_raster, mask_gray)
     # create label image
     else:
+        print("maybe good")
+        print(gdf_buffer)
         gdf_to_array(gdf_buffer, im_vis_file, output_raster,
-                     burnValue=burnValue)
+                     burnValue=burnValue, verbose=True)
     # load mask
     mask_gray = cv2.imread(output_raster, 0)
+    print(mask_gray)
+    print(np.where(mask_gray != 150))
     # mask_gray = np.clip(mask_gray, 0, max_mask_val)
 
     if plot_file:
@@ -606,9 +610,12 @@ def _get_road_buffer(geoJson, im_vis_file, output_raster,
 
         # road lines
         try:
+            print('try a')
             gdfRoadLines = gpd.read_file(geoJson)
+            print(gdfRoadLines)
             gdfRoadLines.plot(ax=ax0, marker='o', color='red')
         except:
+            print('try b')
             ax0.imshow(mask_gray)
         ax0.axis('off')
         ax0.set_aspect('equal')
@@ -653,7 +660,7 @@ def _get_road_buffer(geoJson, im_vis_file, output_raster,
 
 ##############################################################################
 def gdf_to_array(gdf, im_file, output_raster, burnValue=150,
-                 mask_burn_val_key='', compress=True, NoData_value=0,
+                 mask_burn_val_key='', compress=False, NoData_value=0,
                  verbose=False):
     """
     Create buffer around geojson for desired geojson feature, save as mask
@@ -709,8 +716,6 @@ def gdf_to_array(gdf, im_file, output_raster, burnValue=150,
     if verbose:
         print("gdata.GetGeoTransform():", gdata.GetGeoTransform())
 
-    
-
     # set raster info
     raster_srs = osr.SpatialReference()
     raster_srs.ImportFromWkt(gdata.GetProjectionRef())
@@ -721,9 +726,10 @@ def gdf_to_array(gdf, im_file, output_raster, burnValue=150,
     band = target_ds.GetRasterBand(1)
     band.SetNoDataValue(NoData_value)
 
-    outdriver = ogr.GetDriverByName('MEMORY')
-    outDataSource = outdriver.CreateDataSource('memData')
+    outdriver = ogr.GetDriverByName('MEMORY') #('MEMORY')
+    outDataSource = outdriver.CreateDataSource('memData') #memData
     tmp = outdriver.Open('memData', 1)
+    print("tmp", tmp)
     outLayer = outDataSource.CreateLayer("states_extent", raster_srs,
                                          geom_type=ogr.wkbMultiPolygon)
     # burn
@@ -742,21 +748,87 @@ def gdf_to_array(gdf, im_file, output_raster, burnValue=150,
                 print("burnVal:", burnVal)
         else:
             burnVal = burnValue
+
+        print(burnVal)
         outFeature.SetField(burnField, burnVal)
         outLayer.CreateFeature(outFeature)
         # if verbose:
         #     print ("outFeature:", outFeature)
         outFeature = 0
+        print(outLayer)
 
     if len(mask_burn_val_key) > 0:
+        print('rasterizing 1')
         gdal.RasterizeLayer(target_ds, [1], outLayer,
                             options=["ATTRIBUTE=%s" % burnField])
     else:
-        gdal.RasterizeLayer(target_ds, [1], outLayer, burn_values=[burnVal])
+        print('rasterizing 2')
+        print(outLayer.GetExtent())
+        print("space")
+        print(target_ds.GetDriver())
+        print("space")
+        gdal.RasterizeLayer(target_ds, [1], outLayer, burn_values=[12])
+        print(band)
 
     outLayer = 0
     outDatSource = 0
     tmp = 0
+    return
+    """
+    NoData_value = 0  # -9999
+
+    gdata = gdal.Open(im_file)
+    print("imfile", im_file)
+    print("output raster", output_raster)
+    # set target info
+    #output_raster = output_raster[:-4] + '.tif'
+    print('im file', im_file)
+    print(gdf['road_type'])
+    target_ds = gdal.GetDriverByName('GTiff').Create(output_raster,
+                                                     gdata.RasterXSize,
+                                                     gdata.RasterYSize, 1, gdal.GDT_Byte)
+    print(target_ds)
+    target_ds.SetGeoTransform(gdata.GetGeoTransform())
+
+    # set raster info
+    raster_srs = osr.SpatialReference()
+    raster_srs.ImportFromWkt(gdata.GetProjectionRef())
+    target_ds.SetProjection(raster_srs.ExportToWkt())
+
+    band = target_ds.GetRasterBand(1)
+    band.SetNoDataValue(NoData_value)
+
+    outdriver = ogr.GetDriverByName('MEMORY')
+    print(outdriver)
+    outDataSource = outdriver.CreateDataSource('memData')
+    tmp = outdriver.Open('memData', 1)
+    outLayer = outDataSource.CreateLayer("states_extent", raster_srs,
+                                         geom_type=ogr.wkbMultiPolygon)
+    # burn
+    burnField = "burn"
+    idField = ogr.FieldDefn(burnField, ogr.OFTInteger)
+    outLayer.CreateField(idField)
+    featureDefn = outLayer.GetLayerDefn()
+    for geomShape in gdf['geometry'].values:
+        print('aa', geomShape)
+        outFeature = ogr.Feature(featureDefn)
+        outFeature.SetGeometry(ogr.CreateGeometryFromWkt(geomShape.wkt))
+        outFeature.SetField(burnField, burnValue)
+        outLayer.CreateFeature(outFeature)
+        outFeature = 0
+
+    print('outl', outLayer, 'target ds', target_ds)
+
+    gdal.RasterizeLayer(target_ds, [1], outLayer, burn_values=[burnValue])
+    array = band.ReadAsArray()
+    print('band', array)
+    outLayer = 0
+    outDatSource = 0
+    tmp = 0
+"""
+
+    print('azo')
+
     return
 
 
