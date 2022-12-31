@@ -157,16 +157,20 @@ def predict(model=None, inp=None, out_fname=None,
                         ordering=IMAGE_ORDERING)
     pr = model.predict(np.array([x]))[0]
     pr = pr.reshape((output_height,  output_width, n_classes)).argmax(axis=2)
+    print(pr.dtype)
+    #, seg_img.astype(np.uint8)
 
-    seg_img = visualize_segmentation(pr, inp, n_classes=n_classes,
+    seg_img = visualize_segmentation(pr.astype(np.uint8), inp, n_classes=n_classes,
                                      colors=colors, overlay_img=overlay_img,
                                      show_legends=show_legends,
                                      class_names=class_names,
                                      prediction_width=prediction_width,
                                      prediction_height=prediction_height)
 
+    print(seg_img.dtype)
+
     if out_fname is not None:
-        cv2.imwrite(out_fname, seg_img)
+        cv2.imwrite(out_fname, seg_img.astype(np.uint8))
 
     return pr
 

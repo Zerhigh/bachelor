@@ -4,8 +4,9 @@ import numpy as np
 import cv2
 import os
 from kaggle.models.unet import vgg_unet
+from kaggle.models.unet import vgg_unet, resnet50_unet
 from kaggle.predict import predict
-from keras.models import *
+from keras.models import load_model
 import tensorflow as tf
 
 from types import MethodType
@@ -18,26 +19,28 @@ label_image_semantic_name = "./input/semantic_drone_dataset/training_set/gt/sema
 label_image_semantic = "./input/semantic_drone_dataset/training_set/gt/semantic/label_images/"
 """
 # Paris images
-label_image_semantic_rehashed = 'C:/Users/shollend/bachelor/test_data/train/rehashed/'
-label_image_semantic_masks = 'C:/Users/shollend/bachelor/test_data/train/images/masks2m/'
-label_image_semantic = 'C:/Users/shollend/bachelor/test_data/train/images/'
+label_image_semantic_rehashed = 'C:/Users/shollend/bachelor/test_data/train/tiled/rehashed/'
+label_image_semantic_masks = 'C:/Users/shollend/bachelor/test_data/train/tiled/masks2m/'
+label_image_semantic = 'C:/Users/shollend/bachelor/test_data/train/tiled/images/'
 
 
 ### Plotting ###
 def plotting(path):
-    for i in range(3):
+    for i in range(1):
         fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
 
         #axs[0].imshow(Image.open(original_image))
         #axs[0].grid(False)
 
-        label_image_semantic_IMG = Image.open(path+f"00{i}.png")
+        # label_image_semantic_IMG = Image.open(path+f"00{i}.png")
+        print(path)
+        label_image_semantic_IMG = Image.open(label_image_semantic_rehashed+path)
         label_image_semantic = np.asarray(label_image_semantic_IMG)[:, :]
         axs.imshow(label_image_semantic)
         axs.grid(False)
         plt.show()
 
-#plotting(label_image_semantic_rehashed)
+# plotting(os.listdir(label_image_semantic_rehashed)[0])
 
 ### Determine all unique pixel values from all images ###
 def unique_pixel_vals(path):
@@ -85,43 +88,57 @@ def train_model(model_name_assign, epochs, n_classes, hw, train_images, train_an
     # Aerial Semantic Segmentation Drone Dataset tree, gras, other vegetation, dirt, gravel, rocks, water, paved area, pool, person, dog, car, bicycle, roof, wall, fence, fence-pole, window, door, obstacle
 
     n_classes = n_classes# 2 #2 #22
-    model = vgg_unet(n_classes=n_classes ,  input_height=hw[0], input_width=hw[1])
+    # model = vgg_unet(n_classes=n_classes,  input_height=hw[0], input_width=hw[1])
+    model = resnet50_unet(n_classes=n_classes, input_height=hw[0], input_width=hw[1])
 
     # train model vgg_unet (?)
+    """
     model.train(
         train_images = train_images,
         train_annotations = train_annotations,
         checkpoints_path = "vgg_unet", epochs=epochs)
-
+    """
+    # train resnet
+    model.train(
+        train_images=train_images,
+        train_annotations=train_annotations,
+        checkpoints_path="resnet50_unet", epochs=epochs)
+    
     model.save(model_name_assign)
+    return model
 
-model_name = 'paris_model_2class_2412_12e'
-train_model(model_name, 12, 2, (512, 512), label_image_semantic, label_image_semantic_rehashed)
+model_name = 'paris_model_2class_3112_15e_256x256_resnet'
+model = train_model(model_name, 15, 2, (256, 256), label_image_semantic, label_image_semantic_rehashed)
 
 ### Load Model ###
 def load_model_wparams(model_name_get, inp_hw, out_hw, n_classes):
     n_classes = 2
     reconstructed_model = load_model(model_name)
     reconstructed_model.predict_segmentation = MethodType(predict, reconstructed_model)
-    reconstructed_model.input_width = 608
-    reconstructed_model.input_height= 416
-    reconstructed_model.output_width = 304#704# 208
-    reconstructed_model.output_height = 208#988# 304
+    reconstructed_model.input_width = 256
+    reconstructed_model.input_height = 256
+    reconstructed_model.output_width = 128#256#704# 208
+    reconstructed_model.output_height = 128#256#988# 304
     reconstructed_model.n_classes=n_classes
     return reconstructed_model
 
-#rec_model = load_model_wparams("model_2class_1912_10e", (416, 608), (208, 304), 2)
+#rec_model = load_model_wparams(model_name, (416, 608), (512, 512), 2)
 
 ### Predict result ###
 def predict_results(model, inp_path, out_path):
-    for arr in os.listdir(label_image_semantic):
-        input_image = f"{inp_path}{arr.split('.')[0]}.jpg"
+    for arr in os.listdir(inp_path):
+        #input_image = f"{inp_path}{arr.split('.')[0]}.jpg"
+        print(arr)
+        print(f"{inp_path}{arr}")
+        print(f"{out_path}{arr.split('.')[0]}.jpg")
+        input_image = f"{inp_path}{arr}"
         out = model.predict_segmentation(
             inp=input_image,
-            out_fname=f"{out_path}{model_name}/{arr.split('.')[0]}.png"
+            out_fname=f"{out_path}{arr}"
         )
 
-#predict_results(rec_model, "./input/semantic_drone_dataset/training_set/images/", "./output/")
+predict_results(model, label_image_semantic, f"./output/{model_name}/")
+# predict_results(rec_model, "./input/semantic_drone_dataset/training_set/images/", f"./output/{model_name}/")
 
 ### Plot result ###
 """
@@ -177,4 +194,4 @@ model = pspnet_101_voc12()
 """
 
 ### Get Image from Geojson ###
-from apls import apls
+# from apls import apls

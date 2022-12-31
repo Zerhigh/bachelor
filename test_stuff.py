@@ -53,7 +53,7 @@ def tile_image(image, tile_size, pixel_size, overlap):
     return ret_list
 
 
-def tile_image_w_overlap(image, parameter_dict):
+def tile_image_w_overlap(image, parameter_dict, save_name):
     s = time.time()
     """
     image: uploadable image, should be square, starting in the lower left corner it will be squared
@@ -65,15 +65,19 @@ def tile_image_w_overlap(image, parameter_dict):
     tile_size = parameter_dict['tile_size']
     pixel_size = parameter_dict['pixel_size']
     overlap = parameter_dict['overlap']
+    save = parameter_dict['save']
+    save_path = parameter_dict['save_path']
+    tiling_mask = parameter_dict['tiling_mask']
 
     # square image if necessary
     if image.shape[0] != image.shape[1]:
         image = square_image(image)
 
-    increment = tile_size * pixel_size
+    increment = 256 # tile_size * pixel_size
     no_images = int(np.floor(image.shape[0]/(increment-overlap)))
     len_id = len(str(no_images))
     ret_dict = dict()
+
     for i in range(no_images):
         # create first index
         first_ind = list(str(i))
@@ -88,11 +92,15 @@ def tile_image_w_overlap(image, parameter_dict):
             si = ''.join(second_ind)
             # print(f'{(i*(increment - overlap))}:{(i+1)*increment - i*overlap}, {j*(increment - overlap)}:{(j+1)*increment - j*overlap}')
             add_image = image[(i*(increment - overlap)) : (i+1)*increment - i*overlap, j*(increment - overlap) : (j+1)*increment - j*overlap, :]
+            if save:
+                if (not tiling_mask and len(np.unique(add_image)) > 1) or (tiling_mask and f'{save_name.split(".")[0]}_{fi}_{si}.tif' in tiled_images):
+                    cv2.imwrite(f'{save_path}{save_name.split(".")[0]}_{fi}_{si}.tif', add_image)
+                    print(f'saved {save_path}{save_name.split(".")[0]}_{fi}_{si}.tif')
             # check and dont include monocolor areas
             if len(np.unique(add_image)) > 5:
                 ret_dict[f'img_{fi}_{si}'] = add_image
     e = time.time()
-    print(f'tiling {image.shape[0]}x{image.shape[0]} image with tile size {tile_size} [m] and overlap of {overlap} [m] took {e-s} [s]')
+    #print(f'tiling {image.shape[0]}x{image.shape[0]} image with tile size {tile_size} [m] and overlap of {overlap} [m] took {e-s} [s]')
     return ret_dict
 
 
@@ -111,6 +119,40 @@ def save_images(path, folder_name, image_dict, params):
 
 
 start = time.time()
+print(os.getcwd())
+
+base_source = 'C:/Users/shollend/bachelor/test_data/train/'
+
+source = '10300100D94F1700-visual'
+"""params = {'tile_size': 1300,
+          'pixel_size': 0.3,
+          'overlap': 0,
+          'save': True,
+          'save_path': f'{base_source}/tiled/images/',
+          'tiling_mask': False}"""
+
+params = {'tile_size': 1300,
+          'pixel_size': 0.3,
+          'overlap': 0,
+          'save': True,
+          'save_path': f'{base_source}/tiled/masks2m/',
+          'tiling_mask': True}
+
+tiled_images = os.listdir(f'{base_source}/tiled/images/')
+
+#folder_name = f'{source}_t{params["tile_size"]}_p{params["pixel_size"]}_o{params["overlap"]}'
+#if folder_name not in f'{os.listdir(base_source+"/tiled_images")}':
+#    print('image files are not yet tiled and saved, this may take a while..')
+for img_name in os.listdir(f'{base_source}/masks2m'):
+    img = cv2.imread(f'{base_source}/masks2m/{img_name}')
+    res1 = tile_image_w_overlap(img, params, img_name)
+    #save_images(base_source, folder_name, res1, params)
+
+#else:
+#    print(f'{source} is already tiled with these parameters')
+
+
+"""
 base_source = 'C:/Users/Samuel/Desktop/TU/BachelorArbeit/maxar/'
 
 source = '10300100D94F1700-visual'
@@ -129,7 +171,7 @@ if folder_name not in f'{os.listdir(base_source+"/tiled_images")}':
     save_images(base_source, folder_name, res1, params)
 else:
     print(f'{source} is already tiled with these parameters')
-
+"""
 stop = time.time()
 print(f'time of script running [s]: {round(stop-start, 5)}')
 
