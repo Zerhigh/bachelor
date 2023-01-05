@@ -53,7 +53,7 @@ def tile_image(image, tile_size, pixel_size, overlap):
     return ret_list
 
 
-def tile_image_w_overlap(image, parameter_dict, save_name):
+def tile_image_w_overlap(image, parameter_dict, save_name, image_size):
     s = time.time()
     """
     image: uploadable image, should be square, starting in the lower left corner it will be squared
@@ -73,7 +73,7 @@ def tile_image_w_overlap(image, parameter_dict, save_name):
     if image.shape[0] != image.shape[1]:
         image = square_image(image)
 
-    increment = 256 # tile_size * pixel_size
+    increment = image_size # tile_size * pixel_size
     no_images = int(np.floor(image.shape[0]/(increment-overlap)))
     len_id = len(str(no_images))
     ret_dict = dict()
@@ -123,33 +123,33 @@ print(os.getcwd())
 
 base_source = 'C:/Users/shollend/bachelor/test_data/train/'
 
-source = '10300100D94F1700-visual'
-"""params = {'tile_size': 1300,
+params_masks = {'tile_size': 1300,
           'pixel_size': 0.3,
           'overlap': 0,
           'save': True,
-          'save_path': f'{base_source}/tiled/images/',
-          'tiling_mask': False}"""
-
-params = {'tile_size': 1300,
-          'pixel_size': 0.3,
-          'overlap': 0,
-          'save': True,
-          'save_path': f'{base_source}/tiled/masks2m/',
+          'save_path': f'{base_source}/tiled512/masks2m/',
           'tiling_mask': True}
 
-tiled_images = os.listdir(f'{base_source}/tiled/images/')
+params_images = {'tile_size': 1300,
+          'pixel_size': 0.3,
+          'overlap': 0,
+          'save': True,
+          'save_path': f'{base_source}/tiled512/images/',
+          'tiling_mask': False}
 
-#folder_name = f'{source}_t{params["tile_size"]}_p{params["pixel_size"]}_o{params["overlap"]}'
-#if folder_name not in f'{os.listdir(base_source+"/tiled_images")}':
-#    print('image files are not yet tiled and saved, this may take a while..')
+tiled_images = []
+
+### tile RGB images ###
+for img_name in os.listdir(f'{base_source}/images'):
+    img = cv2.imread(f'{base_source}/images/{img_name}')
+    res1 = tile_image_w_overlap(img, params_images, img_name, 512)
+
+tiled_images = os.listdir(f'{base_source}/tiled512/images/')
+
+### tile masks ###
 for img_name in os.listdir(f'{base_source}/masks2m'):
     img = cv2.imread(f'{base_source}/masks2m/{img_name}')
-    res1 = tile_image_w_overlap(img, params, img_name)
-    #save_images(base_source, folder_name, res1, params)
-
-#else:
-#    print(f'{source} is already tiled with these parameters')
+    res1 = tile_image_w_overlap(img, params_masks, img_name, 512)
 
 
 """

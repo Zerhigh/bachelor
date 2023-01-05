@@ -19,9 +19,9 @@ label_image_semantic_name = "./input/semantic_drone_dataset/training_set/gt/sema
 label_image_semantic = "./input/semantic_drone_dataset/training_set/gt/semantic/label_images/"
 """
 # Paris images
-label_image_semantic_rehashed = 'C:/Users/shollend/bachelor/test_data/train/tiled/rehashed/'
-label_image_semantic_masks = 'C:/Users/shollend/bachelor/test_data/train/tiled/masks2m/'
-label_image_semantic = 'C:/Users/shollend/bachelor/test_data/train/tiled/images/'
+label_image_semantic_rehashed = 'C:/Users/shollend/bachelor/test_data/train/tiled512/rehashed/'
+label_image_semantic_masks = 'C:/Users/shollend/bachelor/test_data/train/tiled512/masks2m/'
+label_image_semantic = 'C:/Users/shollend/bachelor/test_data/train/tiled512/images/'
 
 
 ### Plotting ###
@@ -88,37 +88,35 @@ def train_model(model_name_assign, epochs, n_classes, hw, train_images, train_an
     # Aerial Semantic Segmentation Drone Dataset tree, gras, other vegetation, dirt, gravel, rocks, water, paved area, pool, person, dog, car, bicycle, roof, wall, fence, fence-pole, window, door, obstacle
 
     n_classes = n_classes# 2 #2 #22
-    # model = vgg_unet(n_classes=n_classes,  input_height=hw[0], input_width=hw[1])
-    model = resnet50_unet(n_classes=n_classes, input_height=hw[0], input_width=hw[1])
+    model = vgg_unet(n_classes=n_classes,  input_height=hw[0], input_width=hw[1])
+    # model = resnet50_unet(n_classes=n_classes, input_height=hw[0], input_width=hw[1])
 
     # train model vgg_unet (?)
-    """
     model.train(
         train_images = train_images,
         train_annotations = train_annotations,
-        checkpoints_path = "vgg_unet", epochs=epochs)
-    """
+        checkpoints_path = "vgg_unet", epochs=epochs, optimizer_name='adam')
     # train resnet
-    model.train(
+    """model.train(
         train_images=train_images,
         train_annotations=train_annotations,
-        checkpoints_path="resnet50_unet", epochs=epochs)
-    
+        checkpoints_path="resnet50_unet", epochs=epochs, optimizer_name='adam') #adam"""
+
     model.save(model_name_assign)
     return model
 
-model_name = 'paris_model_2class_3112_15e_256x256_resnet'
-model = train_model(model_name, 15, 2, (256, 256), label_image_semantic, label_image_semantic_rehashed)
+model_name = 'paris_model_2class_0501_15e_512x512_resnet_binarycrossentropy_valsplit0_1_adam'
+model = train_model(model_name, 15, 2, (512, 512), label_image_semantic, label_image_semantic_rehashed)
 
 ### Load Model ###
 def load_model_wparams(model_name_get, inp_hw, out_hw, n_classes):
     n_classes = 2
     reconstructed_model = load_model(model_name)
     reconstructed_model.predict_segmentation = MethodType(predict, reconstructed_model)
-    reconstructed_model.input_width = 256
-    reconstructed_model.input_height = 256
-    reconstructed_model.output_width = 128#256#704# 208
-    reconstructed_model.output_height = 128#256#988# 304
+    reconstructed_model.input_width = 512 #256
+    reconstructed_model.input_height = 512 #256
+    reconstructed_model.output_width = 256 #128#256#704# 208
+    reconstructed_model.output_height = 256 #988# 304
     reconstructed_model.n_classes=n_classes
     return reconstructed_model
 
@@ -127,10 +125,10 @@ def load_model_wparams(model_name_get, inp_hw, out_hw, n_classes):
 ### Predict result ###
 def predict_results(model, inp_path, out_path):
     for arr in os.listdir(inp_path):
-        #input_image = f"{inp_path}{arr.split('.')[0]}.jpg"
-        print(arr)
-        print(f"{inp_path}{arr}")
-        print(f"{out_path}{arr.split('.')[0]}.jpg")
+        # input_image = f"{inp_path}{arr.split('.')[0]}.jpg"
+        # print(arr)
+        # print(f"{inp_path}{arr}")
+        # print(f"{out_path}{arr.split('.')[0]}.jpg")
         input_image = f"{inp_path}{arr}"
         out = model.predict_segmentation(
             inp=input_image,
