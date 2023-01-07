@@ -53,7 +53,7 @@ def tile_image(image, tile_size, pixel_size, overlap):
     return ret_list
 
 
-def tile_image_w_overlap(image, parameter_dict, save_name, image_size):
+def tile_image_w_overlap(image, parameter_dict, save_name):
     s = time.time()
     """
     image: uploadable image, should be square, starting in the lower left corner it will be squared
@@ -68,15 +68,18 @@ def tile_image_w_overlap(image, parameter_dict, save_name, image_size):
     save = parameter_dict['save']
     save_path = parameter_dict['save_path']
     tiling_mask = parameter_dict['tiling_mask']
+    overlap_indices = parameter_dict['overlap_indices']
 
     # square image if necessary
     if image.shape[0] != image.shape[1]:
         image = square_image(image)
 
-    increment = image_size # tile_size * pixel_size
-    no_images = int(np.floor(image.shape[0]/(increment-overlap)))
+    #increment = image_size # tile_size * pixel_size
+    no_images = int(len(overlap_indices)) #int(np.floor(image.shape[0]/(increment-overlap)))
     len_id = len(str(no_images))
     ret_dict = dict()
+
+    print(no_images)
 
     for i in range(no_images):
         # create first index
@@ -91,7 +94,8 @@ def tile_image_w_overlap(image, parameter_dict, save_name, image_size):
                 second_ind.insert(0, '0')
             si = ''.join(second_ind)
             # print(f'{(i*(increment - overlap))}:{(i+1)*increment - i*overlap}, {j*(increment - overlap)}:{(j+1)*increment - j*overlap}')
-            add_image = image[(i*(increment - overlap)) : (i+1)*increment - i*overlap, j*(increment - overlap) : (j+1)*increment - j*overlap, :]
+            # add_image = image[(i*(increment - overlap)) : (i+1)*increment - i*overlap, j*(increment - overlap) : (j+1)*increment - j*overlap, :]
+            add_image = image[overlap_indices[i][0]:overlap_indices[i][1], overlap_indices[j][0]:overlap_indices[j][1], :]
             if save:
                 if (not tiling_mask and len(np.unique(add_image)) > 1) or (tiling_mask and f'{save_name.split(".")[0]}_{fi}_{si}.tif' in tiled_images):
                     cv2.imwrite(f'{save_path}{save_name.split(".")[0]}_{fi}_{si}.tif', add_image)
@@ -118,6 +122,13 @@ def save_images(path, folder_name, image_dict, params):
     print(f'saving {len(image_dict)} images took {e - s} [s]')
 
 
+def determine_overlap(img_size, wish_size):
+    num_pics = int(np.ceil(img_size/wish_size))
+    applied_step = int((num_pics * wish_size - img_size) / (num_pics - 1))
+    overlap_indices = [(i*(wish_size-applied_step), (i+1)*wish_size - i*applied_step) for i in range(num_pics)]
+    print(overlap_indices)
+    return overlap_indices
+
 start = time.time()
 print(os.getcwd())
 
@@ -127,29 +138,33 @@ params_masks = {'tile_size': 1300,
           'pixel_size': 0.3,
           'overlap': 0,
           'save': True,
-          'save_path': f'{base_source}/tiled512/masks2m/',
-          'tiling_mask': True}
+          'save_path': f'{base_source}/tiled512_overlap/masks2m/',
+          'tiling_mask': True,
+          'overlap_indices': determine_overlap(1300, 512)}
 
 params_images = {'tile_size': 1300,
           'pixel_size': 0.3,
           'overlap': 0,
           'save': True,
-          'save_path': f'{base_source}/tiled512/images/',
-          'tiling_mask': False}
+          'save_path': f'{base_source}/tiled512_overlap/images/',
+          'tiling_mask': False,
+          'overlap_indices': determine_overlap(1300, 512)}
 
 tiled_images = []
 
 ### tile RGB images ###
+
 for img_name in os.listdir(f'{base_source}/images'):
     img = cv2.imread(f'{base_source}/images/{img_name}')
-    res1 = tile_image_w_overlap(img, params_images, img_name, 512)
+    res1 = tile_image_w_overlap(img, params_images, img_name)
 
-tiled_images = os.listdir(f'{base_source}/tiled512/images/')
+tiled_images = os.listdir(f'{base_source}/tiled512_overlap/images/')
 
 ### tile masks ###
+
 for img_name in os.listdir(f'{base_source}/masks2m'):
     img = cv2.imread(f'{base_source}/masks2m/{img_name}')
-    res1 = tile_image_w_overlap(img, params_masks, img_name, 512)
+    res1 = tile_image_w_overlap(img, params_masks, img_name)
 
 
 """

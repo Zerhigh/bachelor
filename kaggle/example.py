@@ -22,6 +22,7 @@ label_image_semantic = "./input/semantic_drone_dataset/training_set/gt/semantic/
 label_image_semantic_rehashed = 'C:/Users/shollend/bachelor/test_data/train/tiled512/rehashed/'
 label_image_semantic_masks = 'C:/Users/shollend/bachelor/test_data/train/tiled512/masks2m/'
 label_image_semantic = 'C:/Users/shollend/bachelor/test_data/train/tiled512/images/'
+images_original = 'C:/Users/shollend/bachelor/test_data/train/images/'
 
 
 ### Plotting ###
@@ -105,22 +106,21 @@ def train_model(model_name_assign, epochs, n_classes, hw, train_images, train_an
     model.save(model_name_assign)
     return model
 
-model_name = 'paris_model_2class_0501_15e_512x512_resnet_binarycrossentropy_valsplit0_1_adam'
-model = train_model(model_name, 15, 2, (512, 512), label_image_semantic, label_image_semantic_rehashed)
+model_name = 'paris_model_2class_0401_30e_512x512_resnet_binarycrossentropy_valsplit0_1_adam'
+# model = train_model(model_name, 15, 2, (512, 512), label_image_semantic, label_image_semantic_rehashed)
 
 ### Load Model ###
 def load_model_wparams(model_name_get, inp_hw, out_hw, n_classes):
-    n_classes = 2
-    reconstructed_model = load_model(model_name)
+    reconstructed_model = load_model(model_name_get)
     reconstructed_model.predict_segmentation = MethodType(predict, reconstructed_model)
-    reconstructed_model.input_width = 512 #256
-    reconstructed_model.input_height = 512 #256
-    reconstructed_model.output_width = 256 #128#256#704# 208
-    reconstructed_model.output_height = 256 #988# 304
-    reconstructed_model.n_classes=n_classes
+    reconstructed_model.input_width = inp_hw[0] #512 #256
+    reconstructed_model.input_height = inp_hw[1]#512 #256
+    reconstructed_model.output_width = out_hw[0] #256 #128#256#704# 208
+    reconstructed_model.output_height = out_hw[1] #256 #988# 304
+    reconstructed_model.n_classes = n_classes
     return reconstructed_model
 
-#rec_model = load_model_wparams(model_name, (416, 608), (512, 512), 2)
+rec_model = load_model_wparams(model_name, (512, 512), (256, 256), 2)
 
 ### Predict result ###
 def predict_results(model, inp_path, out_path):
@@ -135,8 +135,8 @@ def predict_results(model, inp_path, out_path):
             out_fname=f"{out_path}{arr}"
         )
 
-predict_results(model, label_image_semantic, f"./output/{model_name}/")
-# predict_results(rec_model, "./input/semantic_drone_dataset/training_set/images/", f"./output/{model_name}/")
+# predict_results(model, label_image_semantic, f"./output/{model_name}/")
+predict_results(rec_model, images_original, f"./output/{model_name}_full_size/")
 
 ### Plot result ###
 """

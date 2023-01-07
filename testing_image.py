@@ -23,5 +23,5 @@ def new_f(result):
 
 for i in range(1000):
     for j in range(1000):
-        if i*j*2 == 1391104:
+        if i*j*2 == 131072:
             print(i, j)
